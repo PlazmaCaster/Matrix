@@ -10,9 +10,11 @@
 
 namespace Tensor {
 
+/// Matrix<T>
+/// Row-major matrix class. Allows for basic arithmetic operations on the matrices
 template <class T>
 class Matrix {
-///----- Public Members -------------------------------------------------------
+/// ----- Public Members ---------------------------------------------------------------------------
 public:
     class Iterator {
     public:
@@ -209,6 +211,26 @@ Matrix<T>::Matrix(const size_type& width, const size_type& height,
 //}
 
 template <class T>
+Matrix<T>::Matrix(const Matrix<T>& other) {
+    m_width = other.m_width;
+    m_height = other.m_height;
+
+    m_data = new value_type[m_width * m_height];
+    std::copy(other.begin(), other.end(), begin()
+}
+
+/// ----------------------------------------------------------------------------
+/// T& at()
+///
+/// @brief returns the value at the index of column x and the row y
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
+template <class T>
 typename Matrix<T>::reference 
 Matrix<T>::at(size_type x, size_type y) {
 
@@ -218,6 +240,17 @@ Matrix<T>::at(size_type x, size_type y) {
     return (*this)(x,y);
 }
 
+/// ----------------------------------------------------------------------------
+/// const T& at()
+///
+/// @brief returns the value at the index of column x and the row y
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::const_reference 
 Matrix<T>::at(size_type x, size_type y) const {
@@ -228,6 +261,18 @@ Matrix<T>::at(size_type x, size_type y) const {
     return (*this)(x,y);
 }
 
+/// ----------------------------------------------------------------------------
+/// T& operator()
+///
+/// @brief returns the value at the index of column x and the row y. Overloads
+/// the operator() to act as the subscript operator '[]'
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::reference 
 Matrix<T>::operator()(const size_type& x, const size_type& y) {
@@ -239,6 +284,18 @@ Matrix<T>::operator()(const size_type& x, const size_type& y) {
 
 }
 
+/// ----------------------------------------------------------------------------
+/// const T& operator()
+///
+/// @brief returns the value at the index of column x and the row y. Overloads
+/// the operator() to act as the subscript operator '[]'
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::const_reference 
 Matrix<T>::operator()(const size_type& x, const size_type& y) const {
