@@ -13,10 +13,14 @@ int main() {
         }
     }
     test.print();
+    std::cout << '\n';
 
-    for (iter i = test.begin(); i != test.end(); ++i) {
-        std::cout << *i << ' ';
-    }
+    test.resize(3, 3);
+    test.print();
+    std::cout << '\n';
+
+    test.resize(5, 5);
+    test.print();
 
     return 0;
 }

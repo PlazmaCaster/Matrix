@@ -84,7 +84,7 @@ public:
 
     // Initialized Constructor
     Matrix(const size_type& width, const size_type& height, 
-        const value_type& value = value_type());
+           const value_type& value = value_type());
 
     // Initializer_list Constructor
     //Matrix(
@@ -115,26 +115,27 @@ public:
     const_reference operator()(const size_type& x, const size_type& y) const;
 
     Iterator begin() { return Iterator(m_data); }
-    Iterator end() { return Iterator(m_data + m_width * m_height); }
+    Iterator end() { return Iterator(m_data + m_size); }
+    size_type columns() const { return m_width; }
+    size_type rows() const { return m_height; }
 
     /// ----- Basic Matrix Operations --------------------------------------------------------------
     Matrix& operator+=(const Matrix& rhs);       // M + N
     Matrix& operator-=(const Matrix& rhs);       // M - N
     Matrix& operator*=(const Matrix& rhs);       // M * N
-    Matrix& operator/=(const Matrix& rhs);       // M / N
-
-    /// ----- Scalar Multiplication ----------------------------------------------------------------
-           Matrix& operator*=(const value_type& value); // M * Scalar
-    friend Matrix& operator*=(const value_type& value, const Matrix& rhs);
+    Matrix& operator*=(const value_type& value); // M * Scalar
 
     /// ---- MISC. ---------------------------------------------------------------------------------
     void print();
+    size_type size() const { return m_size; }
+    void resize(size_type new_width, size_type new_height);
 
 
 /// ----- Private Members --------------------------------------------------------------------------
 private:
     size_type m_width;
     size_type m_height;
+    size_type m_size;
     pointer m_data;
 };
 /// ----- Non-Member Overloads ---------------------------------------------------------------------
@@ -153,9 +154,6 @@ Matrix<T>& operator-(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M - N
 template <class T>
 Matrix<T>& operator*(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M * N
 
-template <class T>
-Matrix<T>& operator/(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M / N
-
 ///----- Definitions -------------------------------------------------------------------------------
 
 /// Matrix() 
@@ -164,6 +162,7 @@ template <class T>
 Matrix<T>::Matrix() {
     m_width = 0;
     m_height = 0;
+    m_size = 0;
     m_data = nullptr;
 }
 
@@ -186,10 +185,11 @@ Matrix<T>::Matrix(const size_type& width, const size_type& height,
     else {
         m_width = width;
         m_height = height;
+        m_size = m_width * m_height;
 
-        m_data = new value_type[m_width * m_height];
+        m_data = new value_type[m_size];
 
-        for (size_type i = 0; i < m_width * m_height; ++i) {
+        for (size_type i = 0; i < m_size; ++i) {
             m_data[i] = value;
         }
     }
@@ -214,10 +214,36 @@ template <class T>
 Matrix<T>::Matrix(const Matrix<T>& other) {
     m_width = other.m_width;
     m_height = other.m_height;
+    m_size = other.m_size;
 
     m_data = new value_type[m_width * m_height];
-    std::copy(other.begin(), other.end(), begin()
+    std::copy(other.begin(), other.end(), begin());
 }
+
+template <class T>
+typename Matrix<T>::Matrix& 
+Matrix<T>::operator+=(const Matrix& rhs) {
+
+}
+
+template <class T>
+typename Matrix<T>::Matrix& 
+Matrix<T>::operator-=(const Matrix& rhs) {
+
+}
+
+template <class T>
+typename Matrix<T>::Matrix& 
+Matrix<T>::operator*=(const Matrix& rhs) {
+
+}
+
+template <class T>
+typename Matrix<T>::Matrix& 
+Matrix<T>::operator*=(const value_type& value) {
+
+}
+
 
 /// ----------------------------------------------------------------------------
 /// T& at()
@@ -325,6 +351,32 @@ void Matrix<T>::print() {
         }
     }
 }
+
+template <class T>
+void Matrix<T>::resize(size_type new_width, size_type new_height) {
+    if (!(new_width >= 1 && new_width >= 1)) {
+        throw std::length_error("Minimum Dimensions of 1x1 required\n");
+    }
+    size_type new_elements = new_width * new_height;
+
+    const pointer limit = new_elements < m_size ? m_data + new_elements : m_data + m_size;
+
+    pointer temp_data = new value_type[new_elements];
+
+    for (size_type i = 0; i < new_elements; ++i) {
+        temp_data[i] = value_type();
+    }
+
+
+    std::copy(m_data, limit, temp_data);
+
+    delete[] m_data;
+    m_data = temp_data;
+    m_size = new_elements;
+    m_width = new_width;
+    m_height = new_height;
+}
+
 }
 
 #endif /* MATRIX_H */
