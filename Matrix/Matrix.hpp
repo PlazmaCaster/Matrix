@@ -7,9 +7,10 @@
 #include <iterator>
 #include <initializer_list>
 
-
 namespace Tensor {
 
+/// TODO: Create custom exception class
+/// M rows by N columns ( M x N )
 /// Matrix<T>
 /// Row-major matrix class. Allows for basic arithmetic operations on the matrices
 template <class T>
@@ -66,6 +67,7 @@ public:
         friend Iterator operator-(difference_type lhs, const Iterator& rhs) { 
             return Iterator(lhs - rhs.m_ptr);
         }
+        
 
     private:
         pointer m_ptr;
@@ -114,8 +116,8 @@ public:
           reference operator()(const size_type& x, const size_type& y);
     const_reference operator()(const size_type& x, const size_type& y) const;
 
-    Iterator begin() { return Iterator(m_data); }
-    Iterator end() { return Iterator(m_data + m_size); }
+    Iterator begin()    { return Iterator(m_data); }
+    Iterator end()      { return Iterator(m_data + m_size); }
     size_type columns() const { return m_width; }
     size_type rows() const { return m_height; }
 
@@ -179,19 +181,18 @@ Matrix<T>::Matrix() {
 template <class T>
 Matrix<T>::Matrix(const size_type& width, const size_type& height,
                   const value_type& value) {
-    if (!(width >= 1 && height >= 1)) {
-        throw std::length_error("Minimum Dimensions of 1x1 required\n");
+    if (width == 0 || height == 0) {
+        throw std::length_error("minimum dimensions of 1x1 required\n");
     }
-    else {
-        m_width = width;
-        m_height = height;
-        m_size = m_width * m_height;
-
-        m_data = new value_type[m_size];
-
-        for (size_type i = 0; i < m_size; ++i) {
-            m_data[i] = value;
-        }
+    m_width = width;
+    m_height = height;
+    m_size = m_width * m_height;
+    
+    m_data = new value_type[m_size];
+    //std::cout << m_data << '\n';
+    
+    for (size_type i = 0; i < m_size; ++i) {
+        m_data[i] = value;
     }
 }
 
@@ -223,13 +224,27 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator+=(const Matrix& rhs) {
-
+    // TODO: Exception class
+    // if (m_width != rhs.m_width || m_height != rhs.m_height) {
+    //     throw ERROR
+    // }
+    for (size_type row = 0; row != rows(); ++row) {
+        for (size_type col = 0; col != columns(); ++col) {
+            at(col, row) += rhs.at(col, row);
+        }
+    }
+    return *this;
 }
 
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator-=(const Matrix& rhs) {
-
+    for (size_type row = 0; row != rows(); ++row) {
+        for (size_type col = 0; col != columns(); ++col) {
+            at(col, row) -= rhs.at(col, row);
+        }
+    }
+    return *this;
 }
 
 template <class T>
@@ -241,7 +256,12 @@ Matrix<T>::operator*=(const Matrix& rhs) {
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator*=(const value_type& value) {
-
+    for (size_type row = 0; row != rows(); ++row) {
+        for (size_type col = 0; col != columns(); ++col) {
+            at(col, row) *= value;
+        }
+    }
+    return *this;
 }
 
 
@@ -352,29 +372,56 @@ void Matrix<T>::print() {
     }
 }
 
+
+/// void resize()
+/// 
+/// @brief Function will resize the Matrix to a new given dimension. If the
+/// Matrix is going to be shrunk, then the data within the dimensions will be
+/// the same. If the Matrix is going to be expanded, the default value will fill
+/// the new area.
+/// 
+/// @warning Will delete data when shrinking
+/// 
+/// @note Example:
+/// 
+/// Matrix(3,3)     resize(2,2)     resize(3,3)
+/// 1 2 3           1 2             1 2 0
+/// 4 5 6           4 5             4 5 0
+/// 7 8 9                           0 0 0
+/// 
+/// @param new_width: The new width of the Matrix (i.e.: num of columns)
+/// @param new_height: The new hieght of the Matrix (i.e.: num of rows)
+/// 
+/// @throws std::length_error("Minium Dimensions of 1x1 required")
+/// 
+/// @note If the dimensions are the same then the function does nothing
 template <class T>
 void Matrix<T>::resize(size_type new_width, size_type new_height) {
-    if (!(new_width >= 1 && new_width >= 1)) {
-        throw std::length_error("Minimum Dimensions of 1x1 required\n");
+    if (new_width == 0 || new_height == 0) {
+        throw std::length_error("minimum dimensions of 1x1 required\n");
     }
-    size_type new_elements = new_width * new_height;
+    if (new_width != m_width || new_height != m_height) {
+        size_type new_elements = new_width * new_height;
 
-    const pointer limit = new_elements < m_size ? m_data + new_elements : m_data + m_size;
+        pointer temp_data = new value_type[new_elements];
 
-    pointer temp_data = new value_type[new_elements];
+        for (size_type y = 0; y < new_height; ++y) {
+            for (size_type x = 0; x < new_width; ++x) {
+                if (x >= m_width || y >= m_width) {
+                    *(temp_data + x + y * new_width) = value_type();
+                }
+                else {
+                    *(temp_data + x + y * new_width) = at(x, y);
+                }
+            }
+        }
 
-    for (size_type i = 0; i < new_elements; ++i) {
-        temp_data[i] = value_type();
+        delete[] m_data;
+        m_data = temp_data;
+        m_size = new_elements;
+        m_width = new_width;
+        m_height = new_height;
     }
-
-
-    std::copy(m_data, limit, temp_data);
-
-    delete[] m_data;
-    m_data = temp_data;
-    m_size = new_elements;
-    m_width = new_width;
-    m_height = new_height;
 }
 
 }
