@@ -130,8 +130,9 @@
     <ClCompile Include="Testing.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Matrix.h" />
-    <ClInclude Include="Tensor.h" />
+    <ClInclude Include="Matrix.hpp" />
+    <ClInclude Include="SquareMatrix.hpp" />
+    <ClInclude Include="Tensor.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

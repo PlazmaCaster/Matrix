@@ -1,26 +1,36 @@
 ﻿#include <iostream>
 #include "Matrix.h"
+#include "SquareMatrix.hpp"
+#include <ctime>
+#include <cmath>
 
 using namespace Tensor;
-using iter = Matrix<int>::Iterator;
+using value_type = int;
+using iter = Matrix<value_type>::Iterator;
 
 int main() {
 
-    Tensor::Matrix<int> test(5, 5);
-    for (size_t x = 0; x != 5; ++x) {
-        for (size_t y = 0; y != 5; ++y) {
-            test(x, y) = static_cast<int>(x + y);
+    std::srand(static_cast<size_t>(time(nullptr)));
+
+    SquareMatrix<int> test;
+
+    std::cout << test.rows();
+
+    Matrix<value_type> lhs(3, 3);
+    Matrix<value_type> rhs(3, 3);
+
+    for (int i = 0; i != 3; ++i) {
+        for (int j = 0; j != 3; ++j) {
+            lhs.at(i, j) = rand() % 5;
+            rhs.at(i, j) = rand() % 5;
         }
     }
-    test.print();
-    std::cout << '\n';
 
-    test.resize(3, 3);
-    test.print();
-    std::cout << '\n';
-
-    test.resize(5, 5);
-    test.print();
-
+    lhs.print();
+    std::cout << std::endl;
+    //rhs.print();
+    std::cout << std::endl;
+    lhs *= 5;
+    lhs.print();
     return 0;
 }
