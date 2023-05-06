@@ -1,5 +1,5 @@
 ﻿#include <iostream>
-#include "Matrix.h"
+#include "Matrix.hpp"
 #include "SquareMatrix.hpp"
 #include <ctime>
 #include <cmath>
@@ -12,25 +12,18 @@ int main() {
 
     std::srand(static_cast<size_t>(time(nullptr)));
 
-    SquareMatrix<int> test;
+    Matrix<int> test(4,5);
 
-    std::cout << test.rows();
-
-    Matrix<value_type> lhs(3, 3);
-    Matrix<value_type> rhs(3, 3);
-
-    for (int i = 0; i != 3; ++i) {
-        for (int j = 0; j != 3; ++j) {
-            lhs.at(i, j) = rand() % 5;
-            rhs.at(i, j) = rand() % 5;
-        }
+    int insert = 0;
+    for (auto i = test.begin(); i != test.end(); ++i) {
+        *i = insert * insert;
+        ++insert;
     }
 
-    lhs.print();
-    std::cout << std::endl;
-    //rhs.print();
-    std::cout << std::endl;
-    lhs *= 5;
-    lhs.print();
+    test.print();
+    std::cout << '\n' << test(0, 4);
+
+
+
     return 0;
 }
