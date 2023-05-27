@@ -117,8 +117,8 @@ public:
           reference operator()(const size_type& row, const size_type& col);
     const_reference operator()(const size_type& row, const size_type& col) const;
 
-    Iterator begin()    { return Iterator(m_data); }
-    Iterator end()      { return Iterator(m_data + m_size); }
+    Iterator begin() const { return Iterator(m_data); } 
+    Iterator end() const { return Iterator(m_data + m_size); }
     size_type columns() const { return m_width; }
     size_type rows() const { return m_height; }
 
@@ -135,7 +135,7 @@ public:
     Matrix& transpose();
 
 /// ----- Private Members --------------------------------------------------------------------------
-private:
+//private:
     size_type m_width;
     size_type m_height;
     size_type m_size;
@@ -444,6 +444,41 @@ void Matrix<T>::resize(size_type new_width, size_type new_height) {
         m_height = new_height;
     }
 }
+
+template <class T>
+bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+    bool equal = true;
+
+    if (lhs.rows() != rhs.rows() || lhs.columns() != rhs.columns()) {
+        equal = false;
+    }
+
+    if (equal) {
+        auto lhs_iter = lhs.begin();
+        auto rhs_iter = rhs.begin();
+
+        while (lhs_iter != lhs.end() || equal) {
+            if (*lhs_iter != *rhs_iter) {
+                equal = false;
+            }
+            ++lhs_iter;
+            ++rhs_iter;
+        }
+    }
+    return equal;
+}
+
+template <class T>
+bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs);
+
+template <class T>
+Matrix<T>& operator+(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M + N
+
+template <class T>
+Matrix<T>& operator-(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M - N
+
+template <class T>
+Matrix<T>& operator*(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M * N
 
 }
 
