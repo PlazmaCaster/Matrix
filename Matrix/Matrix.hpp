@@ -224,6 +224,34 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
 
 template <class T>
 typename Matrix<T>::Matrix& 
+Matrix<T>::operator=(const Matrix& rhs) {
+    if (this != &rhs) {
+        delete m_data;
+        m_height = rhs.rows();
+        m_width  = rhs.columns();
+        m_size   = rhs.size();
+
+        std::copy(rhs.begin(), rhs.end(), m_data);
+    }
+    return *this;
+}
+
+template <class T>
+typename Matrix<T>::Matrix&
+Matrix<T>::operator=(Matrix<T>&& rhs) {
+
+    if (this != &rhs) {
+        delete[] m_data;
+        m_height = std::exchange(rhs.m_height, 0);
+        m_width  = std::exchange(rhs.m_width, 0);
+        m_size   = std::exchange(rhs.m_size, 0);
+        m_data   = std::exchange(rhs.m_data, nullptr);
+    }
+    return *this;
+}
+
+template <class T>
+typename Matrix<T>::Matrix& 
 Matrix<T>::operator+=(const Matrix& rhs) {
     // TODO: Exception class
     // if (m_width != rhs.m_width || m_height != rhs.m_height) {
@@ -270,12 +298,12 @@ Matrix<T>::operator*=(const Matrix& rhs) {
     for (size_type row = 0; row != temp.rows(); ++row) {
         for (size_type col = 0; col != temp.columns(); ++col) {
             for (size_type lambda = 0; lambda != columns(); ++lambda) {
-                temp(row, col) += at(row, lambda) * rhs.at(lambda, columns);
+                temp(row, col) += at(row, lambda) * rhs.at(lambda, col);
             }
         }
     }
 
-    *this = temp;
+    *this = std::move(temp);
 
     return *this;
 
