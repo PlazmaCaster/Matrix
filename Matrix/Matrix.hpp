@@ -249,11 +249,12 @@ Matrix<T>::operator-=(const Matrix& rhs) {
 }
 
 
-/// 4 x 3 (m x n)     3 x 2
-/// |a11 a12 a13|   |b11 b12|   |(a11*b11+a12*b21+a13*b31) (a11*b12 + a12*b22 + a13*b32)
-/// |a21 a22 a23| * |b21 b22| = 
-/// |a31 a32 a33|   |b31 b32|
-/// |a41 a42 a43|
+/// 4 x 3 (m x n)     3 x 2                             4 x 2
+/// -----------------------------------------------------------------------------------------
+/// |a11 a12 a13|   |b11 b12|   |(a11*b11 + a12*b21 + a13*b31) (a11*b12 + a12*b22 + a13*b32)|
+/// |a21 a22 a23| * |b21 b22| = |(a21*b11 + a22*b21 + a23*b31) (a21*b12 + a22*b22 + a23*b32)|
+/// |a31 a32 a33|   |b31 b32|   |(a31*b11 + a32*b21 + a33*b31) (a31*b12 + a32*b22 + a33*b32)|
+/// |a41 a42 a43|               |(a41*b11 + a42*b21 + a43*b31) (a41*b12 + a42*b22 + a43*b43)|
 /// 
 /// 
 template <class T>
@@ -264,7 +265,19 @@ Matrix<T>::operator*=(const Matrix& rhs) {
     //    throw 
     //}
     
-    Matrix temp(m_height, rhs.m_width);
+    Matrix temp(rows(), rhs.columns());
+
+    for (size_type row = 0; row != temp.rows(); ++row) {
+        for (size_type col = 0; col != temp.columns(); ++col) {
+            for (size_type lambda = 0; lambda != columns(); ++lambda) {
+                temp(row, col) += at(row, lambda) * rhs.at(lambda, columns);
+            }
+        }
+    }
+
+    *this = temp;
+
+    return *this;
 
 }
 
