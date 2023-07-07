@@ -7,7 +7,7 @@
 #include <iterator>
 #include <initializer_list>
 
-namespace Tensor {
+//namespace Tensor {
 
 /// TODO: Create custom exception class
 /// M rows by N columns ( M x N )
@@ -20,13 +20,15 @@ class Matrix {
 public:
     class Iterator {
     public:
-        using iterator_catgetory = std::random_access_iterator_tag;
+        
+        using iterator_category  = std::random_access_iterator_tag;
         using difference_type    = std::ptrdiff_t;
         using value_type         = T;
-        using pointer            = T*;
-        using reference          = T&;
+        using pointer            = value_type*;
+        using reference          = value_type&;
 
-        Iterator(pointer ptr = nullptr) : m_ptr(ptr) {}
+
+        explicit Iterator(pointer ptr = nullptr) : m_ptr(ptr) {}
         Iterator(const Iterator& other) : m_ptr(other.m_ptr) {}
         
         /// ----- Access Overloads -----------------------------------------------------------------
@@ -53,13 +55,19 @@ public:
         friend bool operator>(const Iterator& lhs, const Iterator& rhs) {
             return lhs.m_ptr > rhs.ptr;
         }
+        /// ----- Prefix & Postfix Overlodas -------------------------------------------------------
+        Iterator& operator++() { ++m_ptr; return *this; }
+        Iterator& operator++(int) { Iterator tmp(*this); ++m_ptr; return tmp; }
+        Iterator& operator--() { --m_ptr; return *this; }
+        Iterator& operator--(int) { Iterator tmp(*this); --m_ptr; return tmp; }
+
         /// ----- Iterator Math Overloads ----------------------------------------------------------
         Iterator& operator+=(difference_type rhs) { m_ptr += rhs; return *this; }
         Iterator& operator-=(difference_type rhs) { m_ptr -= rhs; return *this; }
-        Iterator& operator++() { ++m_ptr; return *this; }
-        Iterator& operator--() { --m_ptr; return *this; }
+
 
         difference_type operator-(const Iterator& rhs) { return m_ptr - rhs.m_ptr; }
+
         Iterator operator+(difference_type rhs) const { return Iterator(m_ptr + rhs); }
         Iterator operator-(difference_type rhs) const { return Iterator(m_ptr - rhs); }
         friend Iterator operator+(difference_type lhs, const Iterator& rhs) { 
@@ -96,19 +104,19 @@ public:
     //);
 
     // Copy Constructor
-    Matrix(const Matrix& other);
+    Matrix(const Matrix<T>& other);
     
     // Move Constructor
-    Matrix(Matrix&& other);
+    Matrix(Matrix<T>&& other);
 
     // Destructor
     ~Matrix() { delete[] m_data; }
 
     // Copy Assignment Operator
-    Matrix& operator=(const Matrix& rhs);
+    Matrix& operator=(const Matrix<T>& rhs);
 
     // Move Assignment Operator
-    Matrix& operator=(Matrix&& rhs);
+    Matrix& operator=(Matrix<T>&& rhs);
 
     /// ----- Indexing functions -------------------------------------------------------------------
           reference at(size_type row, size_type col);
@@ -197,21 +205,6 @@ Matrix<T>::Matrix(const size_type& height, const size_type& width,
     }
 }
 
-// TODO: Finish initializer list CTOR after all other are done... may come in handy
-//template <class T>
-//Matrix<T>::Matrix(const size_type& width, const size_type& height,
-//                  const std::initializer_list<value_type>& init) {
-//    if (!(width >= 1 && height >= 1)) {
-//        throw std::length_error("Minimum Dimensions of 1x1 required\n");
-//    }
-//    else {
-//        m_width = width;
-//        m_height = height;
-//
-//        m_data = new value_type[m_width * m_height];
-//    }
-//}
-
 template <class T>
 Matrix<T>::Matrix(const Matrix<T>& other) {
     m_width = other.m_width;
@@ -219,7 +212,15 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
     m_size = other.m_size;
 
     m_data = new value_type[m_width * m_height];
-    std::copy(other.begin(), other.end(), begin());
+    std::copy(other.begin(), other.end(), m_data);
+}
+
+template <class T>
+Matrix<T>::Matrix(Matrix<T>&& other) {
+    m_height = std::exchange(other.m_height, 0);
+    m_width  = std::exchange(other.m_width, 0);
+    m_size   = std::exchange(other.m_size, 0);
+    m_data   = std::exchange(other.m_data, nullptr);
 }
 
 template <class T>
@@ -230,8 +231,8 @@ Matrix<T>::operator=(const Matrix& rhs) {
         m_height = rhs.rows();
         m_width  = rhs.columns();
         m_size   = rhs.size();
-
-        std::copy(rhs.begin(), rhs.end(), m_data);
+    
+        //std::copy(rhs.begin(), rhs.end(), begin());
     }
     return *this;
 }
@@ -521,6 +522,6 @@ Matrix<T>& operator-(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M - N
 template <class T>
 Matrix<T>& operator*(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M * N
 
-}
+//}
 
 #endif /* MATRIX_HPP */
