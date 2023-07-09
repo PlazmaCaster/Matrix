@@ -18,17 +18,19 @@ template <class T>
 class Matrix {
 /// ----- Public Members ---------------------------------------------------------------------------
 public:
+
+    /// --------------------------------------------------------------------------------------------
+    /// Iterator
+    /// --------------------------------------------------------------------------------------------
     class Iterator {
     public:
-        
         using iterator_category  = std::random_access_iterator_tag;
         using difference_type    = std::ptrdiff_t;
         using value_type         = T;
         using pointer            = value_type*;
         using reference          = value_type&;
 
-
-        explicit Iterator(pointer ptr = nullptr) : m_ptr(ptr) {}
+        Iterator(pointer ptr = nullptr) : m_ptr(ptr) {}
         Iterator(const Iterator& other) : m_ptr(other.m_ptr) {}
         
         /// ----- Access Overloads -----------------------------------------------------------------
@@ -65,18 +67,17 @@ public:
         Iterator& operator+=(difference_type rhs) { m_ptr += rhs; return *this; }
         Iterator& operator-=(difference_type rhs) { m_ptr -= rhs; return *this; }
 
+        difference_type operator-(const Iterator& rhs) const { return m_ptr - rhs.m_ptr; }
 
-        difference_type operator-(const Iterator& rhs) { return m_ptr - rhs.m_ptr; }
+        Iterator operator+(difference_type rhs) { return Iterator(m_ptr + rhs); }
+        Iterator operator-(difference_type rhs) { return Iterator(m_ptr - rhs); }
 
-        Iterator operator+(difference_type rhs) const { return Iterator(m_ptr + rhs); }
-        Iterator operator-(difference_type rhs) const { return Iterator(m_ptr - rhs); }
         friend Iterator operator+(difference_type lhs, const Iterator& rhs) { 
             return Iterator(lhs + rhs.m_ptr);
         }
-        friend Iterator operator-(difference_type lhs, const Iterator& rhs) { 
+        friend Iterator operator-(difference_type lhs, const Iterator& rhs) {
             return Iterator(lhs - rhs.m_ptr);
         }
-        
 
     private:
         pointer m_ptr;
@@ -90,11 +91,9 @@ public:
     using const_pointer     = const value_type*;
 
     /// ----- Constructors & Initialization --------------------------------------------------------
-    // Default Constructor
-    Matrix();
 
-    // Initialized Constructor
-    Matrix(const size_type& height, const size_type& width, 
+    // default Constructor
+    Matrix(const size_type& height = 1, const size_type& width = 1, 
            const value_type& value = value_type());
 
     // Initializer_list Constructor
@@ -134,13 +133,15 @@ public:
     Matrix& operator+=(const Matrix& rhs);       // M + N
     Matrix& operator-=(const Matrix& rhs);       // M - N
     Matrix& operator*=(const Matrix& rhs);       // M * N
-    Matrix& operator*=(const value_type& value); // M * Scalar
+    Matrix& operator*=(const value_type& rhs);   // M * Scalar
+    
 
     /// ---- MISC. ---------------------------------------------------------------------------------
     void print();
     size_type size() const { return m_size; }
     void resize(size_type new_width, size_type new_height);
-    Matrix& transpose();
+    Matrix transpose();
+    Matrix inverse();
 
 /// ----- Private Members --------------------------------------------------------------------------
 //private:
@@ -154,29 +155,36 @@ template <class T>
 bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs);
 
 template <class T>
-bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs);
-
-template <class T>
-Matrix<T>& operator+(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M + N
-
-template <class T>
-Matrix<T>& operator-(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M - N
-
-template <class T>
-Matrix<T>& operator*(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M * N
-
-///----- Definitions -------------------------------------------------------------------------------
-
-/// Matrix() 
-/// @brief Default Constructor
-template <class T>
-Matrix<T>::Matrix() {
-    m_width = 0;
-    m_height = 0;
-    m_size = 0;
-    m_data = nullptr;
+bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+    return !(lhs == rhs);
 }
 
+template <class T>
+Matrix<T> operator+(Matrix<T> lhs, const Matrix<T>& rhs) {
+    return lhs += rhs;
+}
+
+template <class T>
+Matrix<T> operator-(Matrix<T> lhs, const Matrix<T>& rhs) {
+    return lhs -= rhs;
+}
+
+template <class T>
+Matrix<T> operator*(Matrix<T> lhs, const Matrix<T>& rhs) {
+    return lhs *= rhs;
+}
+
+template <class T>
+Matrix<T> operator*(Matrix<T> lhs, const T& rhs) {
+    return lhs *= rhs;
+}
+
+template <class T>
+Matrix<T> operator*(const T& lhs, Matrix<T> rhs) {
+    return rhs *= lhs;
+}
+
+///----- Definitions -------------------------------------------------------------------------------
 /// Matrix()
 /// @brief Initialized Constructor
 /// 
@@ -185,13 +193,11 @@ Matrix<T>::Matrix() {
 /// @param value: What to fill the Matrix 
 /// 
 /// @note default value is whatever the default ctor of value_type
-/// 
-/// @throws std::lenght_error: Minimum Dimensions of 1x1 required
 template <class T>
 Matrix<T>::Matrix(const size_type& height, const size_type& width,
                   const value_type& value) {
     if (height == 0 || width == 0) {
-        throw std::length_error("minimum dimensions of 1x1 required\n");
+        throw std::invalid_argument("minimum dimensions of 1x1 required\n");
     }
     m_height = height;
     m_width = width;
@@ -227,12 +233,14 @@ template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator=(const Matrix& rhs) {
     if (this != &rhs) {
-        delete m_data;
+        
+        delete[] m_data;
         m_height = rhs.rows();
         m_width  = rhs.columns();
         m_size   = rhs.size();
+        m_data   = new value_type[m_width * m_height];
     
-        //std::copy(rhs.begin(), rhs.end(), begin());
+        std::copy(rhs.begin(), rhs.end(), begin());
     }
     return *this;
 }
@@ -243,6 +251,7 @@ Matrix<T>::operator=(Matrix<T>&& rhs) {
 
     if (this != &rhs) {
         delete[] m_data;
+
         m_height = std::exchange(rhs.m_height, 0);
         m_width  = std::exchange(rhs.m_width, 0);
         m_size   = std::exchange(rhs.m_size, 0);
@@ -250,6 +259,95 @@ Matrix<T>::operator=(Matrix<T>&& rhs) {
     }
     return *this;
 }
+
+/// ----------------------------------------------------------------------------
+/// T& at()
+///
+/// @brief returns the value at the index of column x and the row y
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @note 
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
+template <class T>
+typename Matrix<T>::reference
+Matrix<T>::at(size_type row, size_type col) {
+
+    if (row >= m_height || col >= m_width) {
+        throw std::out_of_range("at() out of bounds");
+    }
+    return (*this)(row, col);
+}
+
+/// ----------------------------------------------------------------------------
+/// const T& at()
+///
+/// @brief returns the value at the index of column x and the row y
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
+template <class T>
+typename Matrix<T>::const_reference
+Matrix<T>::at(size_type row, size_type col) const {
+
+    if (row >= m_height || col >= m_width) {
+        throw std::out_of_range("at() out of bounds");
+    }
+    return (*this)(row, col);
+}
+
+/// ----------------------------------------------------------------------------
+/// T& operator()
+///
+/// @brief returns the value at the index of column x and the row y. Overloads
+/// the operator() to act as the subscript operator '[]'
+/// 
+/// @param x: The x-coord on the matrix (from top-left)
+/// @param y: The y-coord on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (x,y)
+/// ----------------------------------------------------------------------------
+template <class T>
+typename Matrix<T>::reference
+Matrix<T>::operator()(const size_type& row, const size_type& col) {
+
+    if (row >= m_height || col >= m_width) {
+        throw std::out_of_range("at() out of bounds");
+    }
+    return *(m_data + (m_width * row) + col);
+}
+
+/// ----------------------------------------------------------------------------
+/// const T& operator()
+///
+/// @brief returns the value at the index of column x and the row y. Overloads
+/// the operator() to act as the subscript operator '[]'
+/// 
+/// @param row: The row on the matrix (from top-left)
+/// @param col: The column on the matrix (from top-left)
+/// 
+/// @throws std::out_of_range()
+/// @return The value at (row,col)
+/// ----------------------------------------------------------------------------
+template <class T>
+typename Matrix<T>::const_reference
+Matrix<T>::operator()(const size_type& row, const size_type& col) const {
+
+    if (row >= m_height || col >= m_width) {
+        throw std::out_of_range("at() out of bounds");
+    }
+    return *(m_data + (m_width * row) + col);
+}
+
 
 template <class T>
 typename Matrix<T>::Matrix& 
@@ -325,92 +423,7 @@ Matrix<T>::operator*=(const value_type& value) {
 }
 
 
-/// ----------------------------------------------------------------------------
-/// T& at()
-///
-/// @brief returns the value at the index of column x and the row y
-/// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
-/// 
-/// @throws std::out_of_range()
-/// @return The value at (x,y)
-/// ----------------------------------------------------------------------------
-template <class T>
-typename Matrix<T>::reference 
-Matrix<T>::at(size_type row, size_type col) {
 
-    if (row >= m_height|| col >= m_width) {
-        throw std::out_of_range("at() out of bounds");
-    }
-    return (*this)(row,col);
-}
-
-/// ----------------------------------------------------------------------------
-/// const T& at()
-///
-/// @brief returns the value at the index of column x and the row y
-/// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
-/// 
-/// @throws std::out_of_range()
-/// @return The value at (x,y)
-/// ----------------------------------------------------------------------------
-template <class T>
-typename Matrix<T>::const_reference 
-Matrix<T>::at(size_type row, size_type col) const {
-
-    if (row >= m_height|| col >= m_width) {
-        throw std::out_of_range("at() out of bounds");
-    }
-    return (*this)(row,col);
-}
-
-/// ----------------------------------------------------------------------------
-/// T& operator()
-///
-/// @brief returns the value at the index of column x and the row y. Overloads
-/// the operator() to act as the subscript operator '[]'
-/// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
-/// 
-/// @throws std::out_of_range()
-/// @return The value at (x,y)
-/// ----------------------------------------------------------------------------
-template <class T>
-typename Matrix<T>::reference 
-Matrix<T>::operator()(const size_type& row, const size_type& col) {
-
-    if (row >= m_height || col >= m_width) {
-        throw std::out_of_range("at() out of bounds");
-    }
-    return *(m_data + (m_width * row) + col);
-
-}
-
-/// ----------------------------------------------------------------------------
-/// const T& operator()
-///
-/// @brief returns the value at the index of column x and the row y. Overloads
-/// the operator() to act as the subscript operator '[]'
-/// 
-/// @param row: The row on the matrix (from top-left)
-/// @param col: The column on the matrix (from top-left)
-/// 
-/// @throws std::out_of_range()
-/// @return The value at (row,col)
-/// ----------------------------------------------------------------------------
-template <class T>
-typename Matrix<T>::const_reference 
-Matrix<T>::operator()(const size_type& row, const size_type& col) const {
-
-    if (row >= m_height|| col >= m_width) {
-        throw std::out_of_range("at() out of bounds");
-    }
-    return *(m_data + (m_width * row) + col);
-}
 
 
 // HACK: TEMPORARY ONLY FOR VIEWING THE INSIDE OF THE ARRAY
@@ -509,19 +522,6 @@ bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     }
     return equal;
 }
-
-template <class T>
-bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs);
-
-template <class T>
-Matrix<T>& operator+(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M + N
-
-template <class T>
-Matrix<T>& operator-(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M - N
-
-template <class T>
-Matrix<T>& operator*(const Matrix<T>& lhs, const Matrix<T>& rhs);     // M * N
-
 //}
 
 #endif /* MATRIX_HPP */
