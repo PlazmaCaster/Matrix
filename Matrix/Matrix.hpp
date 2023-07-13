@@ -7,7 +7,7 @@
 #include <iterator>
 #include <initializer_list>
 
-//namespace Tensor {
+namespace Tensor {
 
 /// TODO: Create custom exception class
 /// M rows by N columns ( M x N )
@@ -92,7 +92,7 @@ public:
 
     /// ----- Constructors & Initialization --------------------------------------------------------
 
-    // default Constructor
+    // Default Constructor
     Matrix(const size_type& height = 1, const size_type& width = 1, 
            const value_type& value = value_type());
 
@@ -106,7 +106,7 @@ public:
     Matrix(const Matrix<T>& other);
     
     // Move Constructor
-    Matrix(Matrix<T>&& other);
+    Matrix(Matrix<T>&& other) noexcept;
 
     // Destructor
     ~Matrix() { delete[] m_data; }
@@ -115,7 +115,7 @@ public:
     Matrix& operator=(const Matrix<T>& rhs);
 
     // Move Assignment Operator
-    Matrix& operator=(Matrix<T>&& rhs);
+    Matrix& operator=(Matrix<T>&& rhs) noexcept;
 
     /// ----- Indexing functions -------------------------------------------------------------------
           reference at(size_type row, size_type col);
@@ -139,9 +139,7 @@ public:
     /// ---- MISC. ---------------------------------------------------------------------------------
     void print();
     size_type size() const { return m_size; }
-    void resize(size_type new_width, size_type new_height);
-    Matrix transpose();
-    Matrix inverse();
+    void resize(size_type new_width, size_type new_height
 
 /// ----- Private Members --------------------------------------------------------------------------
 //private:
@@ -222,7 +220,7 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
 }
 
 template <class T>
-Matrix<T>::Matrix(Matrix<T>&& other) {
+Matrix<T>::Matrix(Matrix<T>&& other) noexcept {
     m_height = std::exchange(other.m_height, 0);
     m_width  = std::exchange(other.m_width, 0);
     m_size   = std::exchange(other.m_size, 0);
@@ -233,8 +231,8 @@ template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator=(const Matrix& rhs) {
     if (this != &rhs) {
-        
         delete[] m_data;
+
         m_height = rhs.rows();
         m_width  = rhs.columns();
         m_size   = rhs.size();
@@ -247,7 +245,7 @@ Matrix<T>::operator=(const Matrix& rhs) {
 
 template <class T>
 typename Matrix<T>::Matrix&
-Matrix<T>::operator=(Matrix<T>&& rhs) {
+Matrix<T>::operator=(Matrix<T>&& rhs) noexcept {
 
     if (this != &rhs) {
         delete[] m_data;
@@ -522,6 +520,6 @@ bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     }
     return equal;
 }
-//}
+}
 
 #endif /* MATRIX_HPP */

@@ -6,17 +6,13 @@
 #include <vector>
 #include <type_traits>
 
-//using namespace Tensor;
+using namespace Tensor;
 using value_type = int;
 using iter = Matrix<value_type>::Iterator;
-
-
 
 int main() {
     
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
-
-    
 
     Matrix<value_type> unary(3, 4);
     Matrix<value_type> rhs(4, 4);
@@ -36,7 +32,6 @@ int main() {
     std::cout << "---------------------------\n";
     binary.print();
     std::cout << "---------------------------\n\n";
-
 
     binary = scalar * unary;
     unary *= scalar;
