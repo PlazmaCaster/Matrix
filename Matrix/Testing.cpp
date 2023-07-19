@@ -6,38 +6,22 @@
 #include <vector>
 #include <type_traits>
 
-using namespace Tensor;
+
 using value_type = int;
-using iter = Matrix<value_type>::Iterator;
+using iter = Tensor::Matrix<value_type>::Iterator;
 
 int main() {
-    
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
-
-    Matrix<value_type> unary(3, 4);
-    Matrix<value_type> rhs(4, 4);
-    Matrix<value_type> CRASH(4, 3);
-    value_type scalar = 4;
-    Matrix<value_type> binary(3, 4);
-
-    for (auto& i : unary) {
-        i = std::rand() % 10;
+    std::srand(static_cast<unsigned int>(time(nullptr)));
+    Tensor::Matrix<value_type> test(6, 10);
+    int factor = 1;
+    for (int i = 0; i != test.rows(); ++i) {
+        for (int j = 0; j != test.columns(); ++j) {
+            test(i, j) = j * factor;
+        }
+        factor *= 10;
     }
-    for (auto& i : rhs) {
-        i = std::rand() % 10;
-    }
-    unary.print();
-    std::cout << "---------------------------\n";
-    rhs.print();
-    std::cout << "---------------------------\n";
-    binary.print();
-    std::cout << "---------------------------\n\n";
 
-    binary = scalar * unary;
-    unary *= scalar;
-    binary.print();
-    std::cout << "---------------------------\n";
-    unary.print();
+    test.print(", ");
 
     return 0;
 }

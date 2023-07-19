@@ -6,6 +6,8 @@
 #include <iostream>
 #include <iterator>
 #include <initializer_list>
+#include <string>
+#include <iomanip>
 
 namespace Tensor {
 
@@ -16,9 +18,7 @@ namespace Tensor {
 /// Indices follow the conventional format (row,column)
 template <class T>
 class Matrix {
-/// ----- Public Members ---------------------------------------------------------------------------
 public:
-
     /// --------------------------------------------------------------------------------------------
     /// Iterator
     /// --------------------------------------------------------------------------------------------
@@ -137,12 +137,12 @@ public:
     
 
     /// ---- MISC. ---------------------------------------------------------------------------------
-    void print();
+    void print(const std::string& seperator = ' ', std::ostream& out = std::cout) const;
     size_type size() const { return m_size; }
-    void resize(size_type new_width, size_type new_height
+    void resize(size_type new_width, size_type new_height);
 
 /// ----- Private Members --------------------------------------------------------------------------
-//private:
+private:
     size_type m_width;
     size_type m_height;
     size_type m_size;
@@ -182,15 +182,25 @@ Matrix<T> operator*(const T& lhs, Matrix<T> rhs) {
     return rhs *= lhs;
 }
 
+template <class T>
+std::ostream& operator<<(std::ostream& os, const Matrix<T>& mtx);
+
 ///----- Definitions -------------------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------------
 /// Matrix()
-/// @brief Initialized Constructor
+/// 
+/// @brief Default / Initialized Constructor
 /// 
 /// @param width: How wide the Matrix is (i.e.: number of columns)
 /// @param height: How tall the Matrix is (i.e.: number of rows)
 /// @param value: What to fill the Matrix 
 /// 
+/// @note default width & height of 1 x 1
 /// @note default value is whatever the default ctor of value_type
+/// 
+/// @throws std::invalid_argument: non-positive size not allowed
+/// ----------------------------------------------------------------------------
 template <class T>
 Matrix<T>::Matrix(const size_type& height, const size_type& width,
                   const value_type& value) {
@@ -209,6 +219,13 @@ Matrix<T>::Matrix(const size_type& height, const size_type& width,
     }
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix()
+/// 
+/// @brief Copy Constructor
+/// 
+/// @param other: Another Lvalue matrix
+/// ----------------------------------------------------------------------------
 template <class T>
 Matrix<T>::Matrix(const Matrix<T>& other) {
     m_width = other.m_width;
@@ -219,6 +236,13 @@ Matrix<T>::Matrix(const Matrix<T>& other) {
     std::copy(other.begin(), other.end(), m_data);
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix()
+/// 
+/// @brief Move Constructor
+/// 
+/// @param other: an Rvalue matrix
+/// ----------------------------------------------------------------------------
 template <class T>
 Matrix<T>::Matrix(Matrix<T>&& other) noexcept {
     m_height = std::exchange(other.m_height, 0);
@@ -227,6 +251,15 @@ Matrix<T>::Matrix(Matrix<T>&& other) noexcept {
     m_data   = std::exchange(other.m_data, nullptr);
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator=()
+/// 
+/// @brief Copy Assignment Operator
+/// 
+/// @param rhs: An Lvalue matrix to be copied
+/// 
+/// @note does nothing in case of self assignment
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator=(const Matrix& rhs) {
@@ -243,6 +276,15 @@ Matrix<T>::operator=(const Matrix& rhs) {
     return *this;
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator=()
+/// 
+/// @brief Move Assignment Constructor
+/// 
+/// @param rhs: An Rvalue Matrix to be moved
+/// 
+/// @note does nothing in case of self assignment
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix&
 Matrix<T>::operator=(Matrix<T>&& rhs) noexcept {
@@ -261,15 +303,13 @@ Matrix<T>::operator=(Matrix<T>&& rhs) noexcept {
 /// ----------------------------------------------------------------------------
 /// T& at()
 ///
-/// @brief returns the value at the index of column x and the row y
+/// @brief returns the value at the index of specified row and column
 /// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
-/// 
-/// @note 
+/// @param row: The row on the matrix (from top to bottom)
+/// @param col: The column on the matrix (from left to right)
 /// 
 /// @throws std::out_of_range()
-/// @return The value at (x,y)
+/// @return The value at (row,col)
 /// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::reference
@@ -282,15 +322,15 @@ Matrix<T>::at(size_type row, size_type col) {
 }
 
 /// ----------------------------------------------------------------------------
-/// const T& at()
+/// const T& at() const
 ///
-/// @brief returns the value at the index of column x and the row y
+/// @brief returns the value at the index of specified row and column
 /// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
+/// @param row: The row on the matrix (from top to bottom)
+/// @param col: The column on the matrix (from left to right)
 /// 
 /// @throws std::out_of_range()
-/// @return The value at (x,y)
+/// @return The value at (row,col)
 /// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::const_reference
@@ -303,16 +343,16 @@ Matrix<T>::at(size_type row, size_type col) const {
 }
 
 /// ----------------------------------------------------------------------------
-/// T& operator()
+/// T& operator()()
 ///
-/// @brief returns the value at the index of column x and the row y. Overloads
+/// @brief returns the value at the index of "row" and the "col". Overloads
 /// the operator() to act as the subscript operator '[]'
 /// 
-/// @param x: The x-coord on the matrix (from top-left)
-/// @param y: The y-coord on the matrix (from top-left)
+/// @param row: The row on the matrix (from top to bottom)
+/// @param col: The column on the matrix (from left to right)
 /// 
 /// @throws std::out_of_range()
-/// @return The value at (x,y)
+/// @return The value at (row,col)
 /// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::reference
@@ -325,13 +365,13 @@ Matrix<T>::operator()(const size_type& row, const size_type& col) {
 }
 
 /// ----------------------------------------------------------------------------
-/// const T& operator()
+/// const T& operator()() const
 ///
-/// @brief returns the value at the index of column x and the row y. Overloads
+/// @brief returns the value at the index of "row" and the "col". Overloads
 /// the operator() to act as the subscript operator '[]'
 /// 
-/// @param row: The row on the matrix (from top-left)
-/// @param col: The column on the matrix (from top-left)
+/// @param row: The row on the matrix (from top to bottom)
+/// @param col: The column on the matrix (from left to right)
 /// 
 /// @throws std::out_of_range()
 /// @return The value at (row,col)
@@ -346,7 +386,18 @@ Matrix<T>::operator()(const size_type& row, const size_type& col) const {
     return *(m_data + (m_width * row) + col);
 }
 
-
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator+=()
+/// 
+/// @brief adds the value of each right matrix index to the corresponding left 
+/// matrix index.
+/// 
+/// @param rhs: Right side matrix
+/// 
+/// @throws TODO: EXCEPTION CLASS
+/// 
+/// @returns *this: returns self after addition
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator+=(const Matrix& rhs) {
@@ -362,6 +413,18 @@ Matrix<T>::operator+=(const Matrix& rhs) {
     return *this;
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator-=()
+/// 
+/// @brief subtracts the value of each right matrix index to the corresponding 
+/// left matrix index.
+/// 
+/// @param rhs: Right side matrix
+/// 
+/// @throws TODO: EXCEPTION CLASS
+/// 
+/// @returns *this: returns self after subtraction
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator-=(const Matrix& rhs) {
@@ -373,15 +436,18 @@ Matrix<T>::operator-=(const Matrix& rhs) {
     return *this;
 }
 
-
-/// 4 x 3 (m x n)     3 x 2                             4 x 2
-/// -----------------------------------------------------------------------------------------
-/// |a11 a12 a13|   |b11 b12|   |(a11*b11 + a12*b21 + a13*b31) (a11*b12 + a12*b22 + a13*b32)|
-/// |a21 a22 a23| * |b21 b22| = |(a21*b11 + a22*b21 + a23*b31) (a21*b12 + a22*b22 + a23*b32)|
-/// |a31 a32 a33|   |b31 b32|   |(a31*b11 + a32*b21 + a33*b31) (a31*b12 + a32*b22 + a33*b32)|
-/// |a41 a42 a43|               |(a41*b11 + a42*b21 + a43*b31) (a41*b12 + a42*b22 + a43*b43)|
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator*=()
 /// 
+/// @brief preforms the dot product of two matrices assuming they have 
+/// dimensions (A x M) and (M x B)
 /// 
+/// @param rhs: Right side matrix
+///
+/// @throws TODO: EXCEPTION CLASS
+/// 
+/// @returns *this: returns self after multiplication
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator*=(const Matrix& rhs) {
@@ -399,17 +465,25 @@ Matrix<T>::operator*=(const Matrix& rhs) {
             }
         }
     }
-
     *this = std::move(temp);
 
     return *this;
-
 }
 
+/// ----------------------------------------------------------------------------
+/// Matrix<T>& operator*=()
+/// 
+/// @brief Preforms scalar multiplication to the entierty of matrix
+/// 
+/// @param value: The scalar value
+///
+/// @throws TODO: EXCEPTION CLASS
+/// 
+/// @returns *this: returns self after multiplication
+/// ----------------------------------------------------------------------------
 template <class T>
 typename Matrix<T>::Matrix& 
 Matrix<T>::operator*=(const value_type& value) {
-
 
     for (size_type row = 0; row != rows(); ++row) {
         for (size_type col = 0; col != columns(); ++col) {
@@ -420,26 +494,37 @@ Matrix<T>::operator*=(const value_type& value) {
     return *this;
 }
 
-
-
-
-
-// HACK: TEMPORARY ONLY FOR VIEWING THE INSIDE OF THE ARRAY
+/// ----------------------------------------------------------------------------
+/// void print() const
+/// 
+/// @brief Prints out the contents of the matrix
+/// 
+/// @param seperator: The string that seperates two indecies in a row
+/// (defaults = ' ')
+/// @param out: The ostream to be printed to (defaults = std::cout)
+/// ----------------------------------------------------------------------------
 template <class T>
-void Matrix<T>::print() {
-    int x = 0;
-
-    for (size_type i = 0; i < m_height; ++i) {
-        for (size_type j = 0; j < m_width; ++j) {
-            std::cout << m_data[x];
-            ++x;
-            if (j == m_width - 1) {
-                std::cout << '\n';
-            }
-            else {
-                std::cout << ' ';
-            }
+void Matrix<T>::print(const std::string& seperator, std::ostream& out) const {
+    int padding = 0;
+    int i = 0;
+    for (auto& idx : (*this)) {
+        if (std::to_string(idx).length() > padding) {
+            padding = std::to_string(idx).length();
         }
+    }
+    out << std::fixed;
+    for (auto& idx : (*this)) {
+        if (i % columns() == 0) {
+            out << '|';
+        }
+        out << std::setw(padding) << idx;
+        if (i % columns() == columns() - 1) {
+            out << "|\n";
+        }
+        else {
+            out << seperator;
+        }
+        ++i;
     }
 }
 
@@ -498,6 +583,16 @@ void Matrix<T>::resize(size_type new_width, size_type new_height) {
     }
 }
 
+/// ----------------------------------------------------------------------------
+/// bool operator==()
+/// 
+/// @brief Tests for equality between to Matrix<T> : same size & same contents
+/// 
+/// @param lhs, left hand arg
+/// @param rhs, right hand arg
+/// 
+/// @return equal: true if Matrices are equivalent
+/// ----------------------------------------------------------------------------
 template <class T>
 bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     bool equal = true;
@@ -520,6 +615,42 @@ bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     }
     return equal;
 }
+
+/// ----------------------------------------------------------------------------
+/// std::ostream& operator<<()
+/// 
+/// @brief "pretty" prints the contents of the matrix to the desired ostream
+/// 
+/// @param out: Ostream variable
+/// @param mtx: Source of data
+/// ----------------------------------------------------------------------------
+template <class T>
+std::ostream& operator<<(std::ostream& out, const Matrix<T>& mtx) {
+    typename Matrix<T>::size_type i = 0;
+    typename Matrix<T>::size_type padding = 0;
+
+    for (auto& idx : mtx) {
+        if (std::to_string(idx).length() > padding) {
+            padding = std::to_string(idx).length();
+        }
+    }
+    out << std::fixed;
+    for (auto& idx : mtx) {
+        if (i % mtx.columns() == 0) {
+            out << '|';
+        }
+        out << std::setw(padding) << idx;
+        if (i % mtx.columns() == mtx.columns() - 1) {
+            out << "|\n";
+        }
+        else {
+            out << ' ';
+        }
+        ++i;
+    }
+    return out;
 }
+
+} /* Namespace Tensor */
 
 #endif /* MATRIX_HPP */
