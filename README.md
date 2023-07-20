@@ -9,5 +9,5 @@ Started out as just a Matrix class (will rename to Tensor in future) as an excer
 Basic implementations of `Iterators` & memory management (not safe though). Allows for basic arithmetic operations between two matrices & scalar multiplication. 
 
 ## Future
-Will edit and improve it in both functionality and safety from time to time as I learn more but no guarantees are made. Will add dedicted `SquareMatrix` class with thing like a determinant finding algorithm. In the future will slowly add functionality for n-rank tensors instead of just vectors (soon <sup>tm</sup>) and matricies. 
+Will edit and improve it in both functionality and safety from time to time as I learn more but no guarantees are made. Will add dedicted `SquareMatrix` class with thing like a determinant finding algorithm. In the future will slowly add functionality for n-rank tensors instead of just vectors (soon<sup>tm</sup>) and matricies. 
 
