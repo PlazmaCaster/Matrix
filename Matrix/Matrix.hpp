@@ -3,11 +3,9 @@
 
 #include <stdexcept>
 //#include <memory>         // TODO: use smart pointers for the love of god
-#include <iostream>
 #include <iterator>
 #include <initializer_list>
-#include <string>
-#include <iomanip>
+
 
 namespace Tensor {
 
@@ -97,10 +95,7 @@ public:
            const value_type& value = value_type());
 
     // Initializer_list Constructor
-    //Matrix(
-    //    const size_type& width, const size_type& height, 
-    //    const std::initializer_list<value_type>& init
-    //);
+    Matrix(const std::initializer_list<std::initializer_list<value_type>>& ilist); 
 
     // Copy Constructor
     Matrix(const Matrix<T>& other);
@@ -137,7 +132,6 @@ public:
     
 
     /// ---- MISC. ---------------------------------------------------------------------------------
-    void print(const std::string& seperator = ' ', std::ostream& out = std::cout) const;
     size_type size() const { return m_size; }
     void resize(size_type new_width, size_type new_height);
 
@@ -181,9 +175,6 @@ template <class T>
 Matrix<T> operator*(const T& lhs, Matrix<T> rhs) {
     return rhs *= lhs;
 }
-
-template <class T>
-std::ostream& operator<<(std::ostream& os, const Matrix<T>& mtx);
 
 ///----- Definitions -------------------------------------------------------------------------------
 
@@ -495,40 +486,6 @@ Matrix<T>::operator*=(const value_type& value) {
 }
 
 /// ----------------------------------------------------------------------------
-/// void print() const
-/// 
-/// @brief Prints out the contents of the matrix
-/// 
-/// @param seperator: The string that seperates two indecies in a row
-/// (defaults = ' ')
-/// @param out: The ostream to be printed to (defaults = std::cout)
-/// ----------------------------------------------------------------------------
-template <class T>
-void Matrix<T>::print(const std::string& seperator, std::ostream& out) const {
-    int padding = 0;
-    int i = 0;
-    for (auto& idx : (*this)) {
-        if (std::to_string(idx).length() > padding) {
-            padding = std::to_string(idx).length();
-        }
-    }
-    out << std::fixed;
-    for (auto& idx : (*this)) {
-        if (i % columns() == 0) {
-            out << '|';
-        }
-        out << std::setw(padding) << idx;
-        if (i % columns() == columns() - 1) {
-            out << "|\n";
-        }
-        else {
-            out << seperator;
-        }
-        ++i;
-    }
-}
-
-/// ----------------------------------------------------------------------------
 /// void resize()
 /// 
 /// @brief Function will resize the Matrix to a new given dimension. If the
@@ -614,41 +571,6 @@ bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
         }
     }
     return equal;
-}
-
-/// ----------------------------------------------------------------------------
-/// std::ostream& operator<<()
-/// 
-/// @brief "pretty" prints the contents of the matrix to the desired ostream
-/// 
-/// @param out: Ostream variable
-/// @param mtx: Source of data
-/// ----------------------------------------------------------------------------
-template <class T>
-std::ostream& operator<<(std::ostream& out, const Matrix<T>& mtx) {
-    typename Matrix<T>::size_type i = 0;
-    typename Matrix<T>::size_type padding = 0;
-
-    for (auto& idx : mtx) {
-        if (std::to_string(idx).length() > padding) {
-            padding = std::to_string(idx).length();
-        }
-    }
-    out << std::fixed;
-    for (auto& idx : mtx) {
-        if (i % mtx.columns() == 0) {
-            out << '|';
-        }
-        out << std::setw(padding) << idx;
-        if (i % mtx.columns() == mtx.columns() - 1) {
-            out << "|\n";
-        }
-        else {
-            out << ' ';
-        }
-        ++i;
-    }
-    return out;
 }
 
 } /* Namespace Tensor */
