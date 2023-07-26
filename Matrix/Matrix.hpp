@@ -5,38 +5,45 @@
 //#include <memory>         // TODO: use smart pointers for the love of god
 #include <iterator>
 #include <initializer_list>
+#include <vector>
+#include <utility>
+
+
+/// TODO: Create custom exception class
 
 
 namespace Tensor {
 
-/// TODO: Create custom exception class
 /// M rows by N columns ( M x N )
 /// Matrix<T>
 /// Row-major matrix class. Allows for basic arithmetic operations on the matrices
-/// Indices follow the conventional format (row,column)
+/// Indices follow the conventional format seen in Mathematics (row,column)
 template <class T>
+// -------------------------------------------------------------------------------------------------
+// Matrix
+// -------------------------------------------------------------------------------------------------
 class Matrix {
 public:
-    /// --------------------------------------------------------------------------------------------
-    /// Iterator
-    /// --------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // Iterator
+    // ---------------------------------------------------------------------------------------------
     class Iterator {
     public:
-        using iterator_category  = std::random_access_iterator_tag;
-        using difference_type    = std::ptrdiff_t;
-        using value_type         = T;
-        using pointer            = value_type*;
-        using reference          = value_type&;
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = T;
+        using pointer = value_type*;
+        using reference = value_type&;
 
         Iterator(pointer ptr = nullptr) : m_ptr(ptr) {}
         Iterator(const Iterator& other) : m_ptr(other.m_ptr) {}
-        
-        /// ----- Access Overloads -----------------------------------------------------------------
+
+        // ----- Access Overloads ----------------------------------------------
         reference operator*() const { return *m_ptr; };
         pointer operator->() const { return m_ptr; }
         reference operator[](difference_type rhs) const { return m_ptr[rhs]; }
-        
-        /// ----- Comparison Overloads -------------------------------------------------------------
+
+        // ----- Comparison Overloads ------------------------------------------
         friend bool operator==(const Iterator& lhs, const Iterator& rhs) {
             return lhs.m_ptr == rhs.m_ptr;
         }
@@ -55,13 +62,13 @@ public:
         friend bool operator>(const Iterator& lhs, const Iterator& rhs) {
             return lhs.m_ptr > rhs.ptr;
         }
-        /// ----- Prefix & Postfix Overlodas -------------------------------------------------------
+        // ----- Prefix & Postfix Overlodas ------------------------------------
         Iterator& operator++() { ++m_ptr; return *this; }
         Iterator& operator++(int) { Iterator tmp(*this); ++m_ptr; return tmp; }
         Iterator& operator--() { --m_ptr; return *this; }
         Iterator& operator--(int) { Iterator tmp(*this); --m_ptr; return tmp; }
 
-        /// ----- Iterator Math Overloads ----------------------------------------------------------
+        // ----- Iterator Math Overloads ---------------------------------------
         Iterator& operator+=(difference_type rhs) { m_ptr += rhs; return *this; }
         Iterator& operator-=(difference_type rhs) { m_ptr -= rhs; return *this; }
 
@@ -70,7 +77,7 @@ public:
         Iterator operator+(difference_type rhs) { return Iterator(m_ptr + rhs); }
         Iterator operator-(difference_type rhs) { return Iterator(m_ptr - rhs); }
 
-        friend Iterator operator+(difference_type lhs, const Iterator& rhs) { 
+        friend Iterator operator+(difference_type lhs, const Iterator& rhs) {
             return Iterator(lhs + rhs.m_ptr);
         }
         friend Iterator operator-(difference_type lhs, const Iterator& rhs) {
@@ -80,26 +87,29 @@ public:
     private:
         pointer m_ptr;
     };
+    // ---------------------------------------------------------------------------------------------
+    using value_type = T;
+    using size_type = std::size_t;
+    using coordinate = std::pair<size_type, size_type>;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
 
-    using value_type        = T;
-    using size_type         = std::size_t;
-    using reference         = value_type&;
-    using const_reference   = const value_type&;
-    using pointer           = value_type*;
-    using const_pointer     = const value_type*;
-
-    /// ----- Constructors & Initialization --------------------------------------------------------
+    // ----- Constructors & Initialization -------------------------------------
 
     // Default Constructor
-    Matrix(const size_type& height = 1, const size_type& width = 1, 
+    Matrix(const size_type& height = 1, const size_type& width = 1,
            const value_type& value = value_type());
 
     // Initializer_list Constructor
-    Matrix(const std::initializer_list<std::initializer_list<value_type>>& ilist); 
+    Matrix(const std::initializer_list<std::initializer_list<value_type>>& ilist);
+
+    Matrix(const std::vector<std::vector<value_type>>& vec);
 
     // Copy Constructor
     Matrix(const Matrix<T>& other);
-    
+
     // Move Constructor
     Matrix(Matrix<T>&& other) noexcept;
 
@@ -112,37 +122,52 @@ public:
     // Move Assignment Operator
     Matrix& operator=(Matrix<T>&& rhs) noexcept;
 
-    /// ----- Indexing functions -------------------------------------------------------------------
-          reference at(size_type row, size_type col);
+    // ----- Indexing functions ------------------------------------------------
+    reference at(size_type row, size_type col);
     const_reference at(size_type row, size_type col) const;
 
-          reference operator()(const size_type& row, const size_type& col);
+    reference operator()(const size_type& row, const size_type& col);
     const_reference operator()(const size_type& row, const size_type& col) const;
 
-    Iterator begin() const { return Iterator(m_data); } 
+    Iterator begin() const { return Iterator(m_data); }
     Iterator end() const { return Iterator(m_data + m_size); }
     size_type columns() const { return m_width; }
     size_type rows() const { return m_height; }
 
-    /// ----- Basic Matrix Operations --------------------------------------------------------------
-    Matrix& operator+=(const Matrix& rhs);       // M + N
-    Matrix& operator-=(const Matrix& rhs);       // M - N
-    Matrix& operator*=(const Matrix& rhs);       // M * N
-    Matrix& operator*=(const value_type& rhs);   // M * Scalar
+    // ----- Basic Matrix Operations -------------------------------------------
+    Matrix& operator+=(const Matrix& rhs);            // M + N
+    Matrix& operator-=(const Matrix& rhs);            // M - N
+    Matrix& operator*=(const Matrix& rhs);            // M * N
+    Matrix& operator*=(const value_type& rhs);        // M * Scalar
+    Matrix operator+() const { return *this; }        // M * 1
+    Matrix operator-() const { return (*this * -1); } // M * -1
     
-
-    /// ---- MISC. ---------------------------------------------------------------------------------
+    // ---- MISC. --------------------------------------------------------------
     size_type size() const { return m_size; }
+
+    Matrix sub_matrix(const coordinate& top_left, const coordinate& bot_right) const;
+    Matrix sub_matrix(const size_type& top_row, const size_type& left_col,
+                      const size_type& bot_row, const size_type& right_col) const;
+
+    Matrix transpose() const;
+
     void resize(size_type new_width, size_type new_height);
 
-/// ----- Private Members --------------------------------------------------------------------------
 private:
+    template <class It>
+    size_type largest_row(const It& first, const It& last) const;
+
+    template <class It>
+    void fill_matrix(const It& first, const It& last);
+
     size_type m_width;
     size_type m_height;
     size_type m_size;
     pointer m_data;
 };
-/// ----- Non-Member Overloads ---------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+
+// ----- Non-Member Overloads --------------------------------------------------
 template <class T>
 bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs);
 
@@ -176,7 +201,7 @@ Matrix<T> operator*(const T& lhs, Matrix<T> rhs) {
     return rhs *= lhs;
 }
 
-///----- Definitions -------------------------------------------------------------------------------
+//----- Definitions --------------------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------------
 /// Matrix()
@@ -208,6 +233,36 @@ Matrix<T>::Matrix(const size_type& height, const size_type& width,
     for (size_type i = 0; i < m_size; ++i) {
         m_data[i] = value;
     }
+}
+
+template <class T>
+Matrix<T>::Matrix(const std::initializer_list<std::initializer_list<value_type>>& init) :
+    m_height(init.size()), m_width(0), m_size(0), m_data(nullptr) {
+
+    m_width = largest_row(init.begin(), init.end());
+    m_size = m_width * m_height;
+    m_data = new value_type[m_size];
+
+    for (Iterator it = begin(); it != end(); ++it) {
+        *it = value_type();
+    }
+    fill_matrix(init.begin(), init.end());
+
+}
+
+template <class T>
+Matrix<T>::Matrix(const std::vector<std::vector<value_type>>& vec) :
+    m_height(vec.size()), m_width(0), m_size(0), m_data(nullptr) {
+
+    m_width = largest_row(vec.begin(), vec.end());
+    m_size = m_width * m_height;
+    m_data = new value_type[m_size];
+
+    for (Iterator it = begin(); it != end(); ++it) {
+        *it = value_type();
+    }
+    fill_matrix(vec.begin(), vec.end());
+
 }
 
 /// ----------------------------------------------------------------------------
@@ -485,6 +540,44 @@ Matrix<T>::operator*=(const value_type& value) {
     return *this;
 }
 
+template <class T>
+Matrix<T> Matrix<T>::sub_matrix(const coordinate& top_left, const coordinate& bot_right) const {
+    return sub_matrix(top_left.first, top_left.second, bot_right.first, bot_right.second);
+}
+
+template <class T>
+Matrix<T> Matrix<T>::sub_matrix(const size_type& top_row, const size_type& left_col,
+                                const size_type& bot_row, const size_type& right_col) const {
+    size_type sub_rows = bot_row - top_row;
+    size_type sub_cols = right_col - left_col;
+    size_type sub_row_idx = 0;
+    size_type sub_col_idx = 0;
+
+    Matrix<T> sub_mtx(sub_rows, sub_cols);
+
+    for (auto i = top_row; i != bot_row; ++i) {
+        for (auto j = left_col; j != right_col; ++j) {
+            sub_mtx(sub_row_idx, sub_col_idx) = at(i, j);
+            ++sub_col_idx;
+        }
+        sub_col_idx = 0;
+        ++sub_row_idx;
+    }
+    return sub_mtx;
+}
+
+template <class T>
+Matrix<T> Matrix<T>::transpose() const {
+    Matrix<T> transpose(m_width,m_height);
+
+    for (size_type original_row = 0; original_row != rows(); ++original_row) {
+        for (size_type original_col = 0; original_col != columns(); ++original_col) {
+            transpose(original_col, original_row) = at(original_row, original_col);
+        }
+    }
+    return transpose;
+}
+
 /// ----------------------------------------------------------------------------
 /// void resize()
 /// 
@@ -571,6 +664,26 @@ bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
         }
     }
     return equal;
+}
+
+template <class T>
+template <class It>
+typename Matrix<T>::size_type Matrix<T>::largest_row(const It& first, const It& last) const {
+    size_type largest = 0;
+    for (auto iter = first; iter != last; ++iter) {
+        if (iter->size() > largest) largest = iter->size();
+    }
+    return largest;
+}
+
+template <class T>
+template <class It>
+void Matrix<T>::fill_matrix(const It& first, const It& last) {
+    auto copy_location = this->begin();
+    for (auto iter = first; iter != last; ++iter) {
+        std::copy(iter->begin(), iter->end(), copy_location);
+        copy_location += m_width;
+    }
 }
 
 } /* Namespace Tensor */
