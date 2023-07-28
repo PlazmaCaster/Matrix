@@ -32,14 +32,10 @@ static constexpr int ITERATIONS = 1000;
 static constexpr int SIZE = 200;
 
 int main() {
-    std::srand(static_cast<unsigned int>(time(nullptr)));
+    std::srand(static_cast<unsigned int>(time(nullptr))); 
+    Tensor::SquareMatrix<int> test(0);
+    std::cout << test.rows() << '\n';
+    std::cout << test.columns();
 
-    Matrix<int> lhs{ {4,5,6,7},{8,9,0,1},{0,0,0,1} };
-    print(&lhs);
-    std::cout << '\n';
-    Matrix<int> sub = lhs.sub_matrix(1,1,3,4);
-    print(&sub);
-    std::cout << '\n'
-        << sub.size() << ' ' << sub.rows() << ' ' << sub.columns();
     return 0;
 }

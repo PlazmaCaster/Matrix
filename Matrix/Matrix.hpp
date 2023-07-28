@@ -11,7 +11,6 @@
 
 /// TODO: Create custom exception class
 
-
 namespace Tensor {
 
 /// M rows by N columns ( M x N )
@@ -153,12 +152,12 @@ public:
 
     void resize(size_type new_width, size_type new_height);
 
-private:
+protected:
     template <class It>
     size_type largest_row(const It& first, const It& last) const;
 
     template <class It>
-    void fill_matrix(const It& first, const It& last);
+    void initialize(const It& first, const It& last);
 
     size_type m_width;
     size_type m_height;
@@ -219,13 +218,11 @@ Matrix<T> operator*(const T& lhs, Matrix<T> rhs) {
 /// ----------------------------------------------------------------------------
 template <class T>
 Matrix<T>::Matrix(const size_type& height, const size_type& width,
-                  const value_type& value) {
+                  const value_type& value) :
+                  m_height(height), m_width(width), m_size(width * height), m_data(nullptr) {
     if (height == 0 || width == 0) {
         throw std::invalid_argument("minimum dimensions of 1x1 required\n");
     }
-    m_height = height;
-    m_width = width;
-    m_size = m_width * m_height;
     
     m_data = new value_type[m_size];
     //std::cout << m_data << '\n';
@@ -246,7 +243,7 @@ Matrix<T>::Matrix(const std::initializer_list<std::initializer_list<value_type>>
     for (Iterator it = begin(); it != end(); ++it) {
         *it = value_type();
     }
-    fill_matrix(init.begin(), init.end());
+    initialize(init.begin(), init.end());
 
 }
 
@@ -261,7 +258,7 @@ Matrix<T>::Matrix(const std::vector<std::vector<value_type>>& vec) :
     for (Iterator it = begin(); it != end(); ++it) {
         *it = value_type();
     }
-    fill_matrix(vec.begin(), vec.end());
+    initialize(vec.begin(), vec.end());
 
 }
 
@@ -678,7 +675,7 @@ typename Matrix<T>::size_type Matrix<T>::largest_row(const It& first, const It& 
 
 template <class T>
 template <class It>
-void Matrix<T>::fill_matrix(const It& first, const It& last) {
+void Matrix<T>::initialize(const It& first, const It& last) {
     auto copy_location = this->begin();
     for (auto iter = first; iter != last; ++iter) {
         std::copy(iter->begin(), iter->end(), copy_location);
