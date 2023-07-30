@@ -1,12 +1,6 @@
 ﻿#include <iostream>
 #include "Matrix.hpp"
 #include "SquareMatrix.hpp"
-#include <ctime>
-#include <cmath>
-#include <vector>
-#include <type_traits>
-#include <chrono>
-#include <numeric>
 
 using value_type = int;
 using iter = Tensor::Matrix<value_type>::Iterator;
@@ -33,7 +27,7 @@ static constexpr int SIZE = 200;
 
 int main() {
     std::srand(static_cast<unsigned int>(time(nullptr))); 
-    Tensor::SquareMatrix<int> test(0);
+    Tensor::SquareMatrix<int> test;
     std::cout << test.rows() << '\n';
     std::cout << test.columns();
 

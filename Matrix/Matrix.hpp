@@ -159,8 +159,8 @@ protected:
     template <class It>
     void initialize(const It& first, const It& last);
 
-    size_type m_width;
     size_type m_height;
+    size_type m_width;
     size_type m_size;
     pointer m_data;
 };

@@ -15,7 +15,8 @@ public:
     using reference = value_type&;
     using size_type = size_t;
 
-    SquareMatrix(const size_type& length = 1, const value_type& value = value_type()) : Matrix<T>(length, length, value) {};
+    SquareMatrix(const size_type& length = 1, const value_type& value = value_type())
+        : Matrix<T>(length, length, value) {};
     SquareMatrix(const std::initializer_list<std::initializer_list<value_type>>& init);
     SquareMatrix(const std::vector<std::vector<value_type>>& vec);
 
@@ -28,19 +29,6 @@ protected:
     using Matrix<T>::m_height;
     using Matrix<T>::m_data;
 };
-
-//template <class T>
-//SquareMatrix<T>::SquareMatrix(const size_type& length, const value_type& value) 
-//    : Matrix<T>(length,length,value) { 
-//    if (length == 0) {
-//        throw std::invalid_argument("minimum dimensions of 1x1 required\n");
-//    }
-//    this->m_data = new value_type[this->m_size];
-//
-//    for (size_type i = 0; i < this->m_size; ++i) {
-//        this->m_data[i] = value;
-//    }
-//}
 
 template <class T>
 SquareMatrix<T>::SquareMatrix(const std::initializer_list<std::initializer_list<value_type>>& init) 
